@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عيد ميلاد سعيد 🎉</title>
+    <style>
+        body {
+            text-align: center;
+            background-color: #8B0000;
+            color: white;
+            font-family: 'Tajawal', sans-serif;
+            overflow: hidden;
+        }
+        h1 {
+            font-size: 3rem;
+            margin-top: 50px;
+        }
+        button {
+            padding: 10px 15px;
+            font-size: 1rem;
+            background-color: white;
+            color: #8B0000;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #ffcccc;
+        }
+        .flower {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            animation: fall linear infinite;
+        }
+        @keyframes fall {
+            0% { transform: translateY(-100px); opacity: 1; }
+            100% { transform: translateY(100vh); opacity: 0; }
+        }
+        .player-controls {
+            margin-top: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 15px;
+            display: inline-block;
+            width: 80%;
+            max-width: 400px;
+        }
+        .progress {
+            width: 100%;
+            height: 5px;
+            background: #ddd;
+            border-radius: 5px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: gold;
+            transition: width 0.5s;
+        }
+        .controls-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>عيد ميلاد سعيد 🎂🎈</h1>
+    <p>أتمنى لكِ يوماً رائعاً مليئاً بالفرح والسعادة! 💖</p>
+    <button onclick="playSong()">سنفور الحلو دوسي هنا 💙 🎶</button>
+    <audio id="song" src="song.mp3" ontimeupdate="updateProgress()"></audio>
+    <div class="player-controls" id="controls" style="display: none;">
+        <p id="time">0:00</p>
+        <div class="progress">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        <div class="controls-row">
+            <button onclick="rewind()">⏪</button>
+            <button onclick="togglePlay()">▶️ / ⏸️</button>
+            <button onclick="forward()">⏩</button>
+        </div>
+    </div>
+    
+    <script>
+        function playSong() {
+            let song = document.getElementById("song");
+            song.play();
+            document.getElementById("controls").style.display = "block";
+            createFlowers();
+            setInterval(createFirework, 800);
+        }
+        
+        function createFlowers() {
+            for (let i = 0; i < 15; i++) {
+                let flower = document.createElement("img");
+                flower.src = "flower.jpg"; // استخدام الصورة المحلية
+                flower.className = "flower";
+                flower.style.left = Math.random() * 100 + "vw";
+                flower.style.animationDuration = Math.random() * 3 + 2 + "s";
+                document.body.appendChild(flower);
+                setTimeout(() => flower.remove(), 5000);
+            }
+        }
+        
+        function updateProgress() {
+            let song = document.getElementById("song");
+            let progressBar = document.getElementById("progress-bar");
+            let timeDisplay = document.getElementById("time");
+            let minutes = Math.floor(song.currentTime / 60);
+            let seconds = Math.floor(song.currentTime % 60);
+            timeDisplay.innerText = minutes + ":" + (seconds < 10 ? "0" + seconds : seconds);
+            progressBar.style.width = (song.currentTime / song.duration) * 100 + "%";
+        }
+        
+        function togglePlay() {
+            let song = document.getElementById("song");
+            if (song.paused) {
+                song.play();
+            } else {
+                song.pause();
+            }
+        }
+        
+        function rewind() {
+            let song = document.getElementById("song");
+            song.currentTime = Math.max(0, song.currentTime - 5);
+        }
+        
+        function forward() {
+            let song = document.getElementById("song");
+            song.currentTime = Math.min(song.duration, song.currentTime + 5);
+        }
+    </script>
+</body>
+</html>
