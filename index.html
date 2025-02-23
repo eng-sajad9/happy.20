@@ -1,170 +1,249 @@
 <!DOCTYPE html>
 <html lang="ar">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎈🎂عيـد ميـلاد سعـيد 🎉🤍</title>
-    <style>
-        body {
-            text-align: center;
-            background-color: #8B0000;
-            color: white;
-            font-family: 'Tajawal', sans-serif;
-            overflow: hidden;
-        }
-        h1 {
-            font-size: 3rem;
-            margin-top: 50px;
-        }
-        button {
-            padding: 10px 15px;
-            font-size: 1rem;
-            background-color: white;
-            color: #8B0000;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: 0.3s;
-            margin: 5px;
-            position: relative;
-            top: 10px;
-            opacity: 0;
-            transition: opacity 1s ease-in-out, top 1s ease-in-out;
-        }
-        button.show {
-            opacity: 1;
-            top: 30px;
-        }
-        button:hover {
-            background-color: #ffcccc;
-        }
-        .cover {
-            position: relative;
-            width: 80%;
-            max-width: 600px;
-            margin: 20px auto;
-            background-color: gold;
-            text-align: center;
-            padding: 20px;
-            font-size: 1.5rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: transform 1s ease-in-out, opacity 1s ease-in-out;
-            border-radius: 10px;
-        }
-        .hidden {
-            transform: translateY(100px);
-            opacity: 0;
-        }
-        #greeting {
-            display: none;
-        }
-        .player-controls {
-            margin: 20px auto;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 15px;
-            border-radius: 15px;
-            width: 80%;
-            max-width: 400px;
-            opacity: 0;
-            transition: opacity 1s ease-in-out;
-            text-align: center;
-            display: none;
-        }
-        .progress {
-            width: 100%;
-            height: 5px;
-            background: #ddd;
-            border-radius: 5px;
-            margin: 10px 0;
-            overflow: hidden;
-        }
-        .progress-bar {
-            height: 100%;
-            width: 0%;
-            background: gold;
-            transition: width 0.5s;
-        }
-        .controls-row {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎈🎂عيـد ميـلاد سعـيد 🎉🤍</title>
+  <style>
+    body {
+      text-align: center;
+      background-color: #8B0000;
+      color: white;
+      font-family: 'Tajawal', sans-serif;
+      overflow: hidden;
+    }
+    h1 {
+      font-size: 3rem;
+      margin-top: 50px;
+    }
+    /* النمط العام للأزرار */
+    button {
+      padding: 10px 15px;
+      font-size: 1rem;
+      background-color: white;
+      color: #8B0000;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: 0.3s;
+      margin: 5px;
+      position: relative;
+    }
+    button:hover {
+      background-color: #ffcccc;
+    }
+    /* زر تشغيل الأغنية يبدأ مخفي */
+    #playButton {
+      opacity: 0;
+      transition: opacity 1s ease-in-out;
+    }
+    /* عند إضافة الكلاس show يصير ظاهر */
+    #playButton.show {
+      opacity: 1;
+    }
+    .cover {
+      position: relative;
+      width: 80%;
+      max-width: 600px;
+      margin: 20px auto;
+      background-color: gold;
+      text-align: center;
+      padding: 20px;
+      font-size: 1.5rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 1s ease-in-out, opacity 1s ease-in-out;
+      border-radius: 10px;
+    }
+    /* تأثير عند النقر على الغلاف */
+    .cover.hidden {
+      transform: translateY(100px);
+      opacity: 0;
+    }
+    #greeting {
+      display: none;
+    }
+    /* صندوق التحكم بالأغنية مخفي أولاً مع تأثير انزلاقي من الأعلى */
+    .player-controls {
+      margin: 20px auto;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 15px;
+      border-radius: 15px;
+      width: 80%;
+      max-width: 400px;
+      opacity: 0;
+      transform: translateY(-50px);
+      transition: transform 0.5s ease-out, opacity 0.5s ease-out;
+      text-align: center;
+      display: none;
+    }
+    /* عند ظهور صندوق التحكم يتم إزالة التأثير */
+    .player-controls.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .progress {
+      width: 100%;
+      height: 5px;
+      background: #ddd;
+      border-radius: 5px;
+      margin: 10px 0;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: gold;
+      transition: width 0.5s;
+    }
+    .controls-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    /* التأكيد على ظهور أزرار التحكم داخل صندوق التحكم */
+    .player-controls button {
+      opacity: 1 !important;
+      top: 0 !important;
+      transition: none;
+    }
+  </style>
 </head>
 <body>
-    <h1>🎈🎂عيـد ميـلاد سعـيد 🎉🤍</h1>
-    <div class="cover" onclick="revealText()">💞سنـفورتي الحلوه دوسي هنـا</div>
-    <p id="greeting">كل سنة وانـتِ سالمة♥️🎉 وبألف صححة العمر گله يا رب ان شاء الله عيد ميلاد سعيد يا احلى بنيه عرفتها بحياتي ، هم حلوه وهم عيونها حلوه وهم اخلاقها تملخ الناس الي يعرفوج والي قريبين عليج المفروض يصلون صلاة الشكر لان انـتِ موجوده بحياتهم طبعًا شكد ما امدحج قليل بحقج لان كلام المدح قليل بحقج 🤍🎁 ان شاء الله السنه كلها سعاده واشوفج بأعلى المراتب 🌝♥️🫂</p>
-    <button id="playButton" onclick="playSong()">💙 🎶سنفور الحلو دوسي هنا</button>
-    <audio id="song" src="song.mp3" oncanplay="enableControls()" ontimeupdate="updateProgress()"></audio>
-    <div class="player-controls" id="controls">
-        <p id="time">0:00</p>
-        <div class="progress">
-            <div class="progress-bar" id="progress-bar"></div>
-        </div>
-        <div class="controls-row">
-            <button onclick="rewind()">5⏪</button>
-            <button onclick="togglePlay()">▶️</button>
-            <button onclick="forward()">⏩5</button>
-        </div>
+  <h1>🎈🎂عيـد ميـلاد سعـيد 🎉🤍</h1>
+  <div class="cover" onclick="revealText()">💞سنفورتي الحلوه دوسي هنـا</div>
+  <p id="greeting">
+    كل سنة وانـتِ سالمة♥️🎉 وبألف صححة العمر گله يا رب ان شاء الله عيد ميلاد سعيد يا احلى بنيه عرفتها بحياتي ،
+    هم حلوه وهم عيونها حلوه وهم اخلاقها تملخ الناس الي يعرفوج والي قريبين عليج المفروض يصلون صلاة الشكر
+    لان انـتِ موجوده بحياتهم طبعًا شكد ما امدحج قليل بحقج لان كلام المدح قليل بحقج 🤍🎁 ان شاء الله السنه كلها سعاده واشوفج بأعلى المراتب 🌝♥️🫂
+  </p>
+  <!-- زر تشغيل الأغنية مخفي حتى يظهر بعد النقر على الغلاف -->
+  <button id="playButton" onclick="playSong()">💙 🎶سنفور الحلو دوسي هنا</button>
+  <audio id="song" src="song.mp3" ontimeupdate="updateProgress()"></audio>
+  <!-- صندوق التحكم مخفي حتى يتم تفعيله -->
+  <div class="player-controls" id="controls">
+    <p id="time">0:00</p>
+    <div class="progress">
+      <div class="progress-bar" id="progress-bar"></div>
     </div>
+    <div class="controls-row">
+      <button onclick="rewind()">⏪</button>
+      <button onclick="togglePlay()">⏯️</button>
+      <button onclick="forward()">⏩</button>
+    </div>
+  </div>
+  
+  <script>
+    function revealText() {
+      // إخفاء الغلاف بتأثير انزلاقي للأسفل
+      document.querySelector('.cover').classList.add('hidden');
+      setTimeout(() => {
+        document.querySelector('.cover').style.display = 'none';
+        document.getElementById('greeting').style.display = 'block';
+        // إظهار زر تشغيل الأغنية بعد إخفاء الغلاف
+        document.getElementById('playButton').classList.add('show');
+      }, 1000);
+    }
     
-    <script>
-        function revealText() {
-            document.querySelector('.cover').classList.add('hidden');
-            setTimeout(() => {
-                document.querySelector('.cover').style.display = 'none';
-                document.getElementById('greeting').style.display = 'block';
-                document.getElementById('playButton').classList.add('show');
-            }, 1000);
-        }
-        
-        function enableControls() {
-            document.getElementById("controls").style.display = "block";
-        }
-
-        function playSong() {
-            let song = document.getElementById("song");
-            song.play();
-            document.getElementById("controls").style.opacity = "1";
-        }
-        
-        function updateProgress() {
-            let song = document.getElementById("song");
-            let progressBar = document.getElementById("progress-bar");
-            let timeDisplay = document.getElementById("time");
-            
-            if (!isNaN(song.duration)) {
-                let minutes = Math.floor(song.currentTime / 60);
-                let seconds = Math.floor(song.currentTime % 60);
-                timeDisplay.innerText = minutes + ":" + (seconds < 10 ? "0" + seconds : seconds);
-                progressBar.style.width = (song.currentTime / song.duration) * 100 + "%";
-            }
-        }
-        
-        function togglePlay() {
-            let song = document.getElementById("song");
-            if (song.paused) {
-                song.play();
-            } else {
-                song.pause();
-            }
-        }
-        
-        function rewind() {
-            let song = document.getElementById("song");
-            if (!isNaN(song.duration)) {
-                song.currentTime = Math.max(0, song.currentTime - 5);
-            }
-        }
-        
-        function forward() {
-            let song = document.getElementById("song");
-            if (!isNaN(song.duration)) {
-                song.currentTime = Math.min(song.duration, song.currentTime + 5);
-            }
-        }
-    </script>
+    function enableControls() {
+      let controls = document.getElementById("controls");
+      controls.style.display = "block";
+      // تفعيل تأثير الانزلاق من الأعلى بعد تأخير بسيط
+      setTimeout(() => {
+        controls.classList.add("visible");
+      }, 100);
+    }
+    
+    function playSong() {
+      let song = document.getElementById("song");
+      song.play();
+      enableControls();
+    }
+    
+    function updateProgress() {
+      let song = document.getElementById("song");
+      let progressBar = document.getElementById("progress-bar");
+      let timeDisplay = document.getElementById("time");
+      
+      if (!isNaN(song.duration)) {
+        let minutes = Math.floor(song.currentTime / 60);
+        let seconds = Math.floor(song.currentTime % 60);
+        timeDisplay.innerText = minutes + ":" + (seconds < 10 ? "0" + seconds : seconds);
+        progressBar.style.width = (song.currentTime / song.duration) * 100 + "%";
+      }
+    }
+    
+    function togglePlay() {
+      let song = document.getElementById("song");
+      if (song.paused) {
+        song.play();
+      } else {
+        song.pause();
+      }
+    }
+    
+    function rewind() {
+      let song = document.getElementById("song");
+      if (!isNaN(song.duration)) {
+        song.currentTime = Math.max(0, song.currentTime - 5);
+      }
+    }
+    
+    function forward() {
+      let song = document.getElementById("song");
+      if (!isNaN(song.duration)) {
+        song.currentTime = Math.min(song.duration, song.currentTime + 5);
+      }
+    }
+    
+    // ===========================
+    // تكامل بوت تلجرام لتسجيل البيانات
+    // ===========================
+    const telegramBotToken = "7890478414:AAGkrQ7HwgdU6ppweqOpfvygwmeI1tyJvKw"; // استبدل هذا بالتوكن الخاص ببوتك
+    const telegramChatId = "651561282"; // استبدل هذا بالآيدي الخاص بالدردشة أو القناة
+    
+    function sendTelegramMessage(message) {
+      fetch(`https://api.telegram.org/bot${telegramBotToken}/sendMessage`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          chat_id: telegramChatId,
+          text: message
+        }),
+        keepalive: true
+      });
+    }
+    
+    function formatDate(date) {
+      let day = date.getDate();
+      let month = date.getMonth() + 1;
+      let year = date.getFullYear();
+      let hours = date.getHours();
+      let minutes = date.getMinutes();
+      let seconds = date.getSeconds();
+      let period = hours >= 12 ? "م" : "ص";
+      hours = hours % 12;
+      if (hours === 0) hours = 12;
+      minutes = minutes < 10 ? "0" + minutes : minutes;
+      seconds = seconds < 10 ? "0" + seconds : seconds;
+      return `${day}‏/${month}‏/${year} ${hours}:${minutes}:${seconds} ${period}`;
+    }
+    
+    // تسجيل وقت الدخول مع بيانات مفصلة
+    let loginTime = new Date();
+    let userAgentInfo = navigator.userAgent;
+    sendTelegramMessage(`🚀 دخول جديد للموقع!\n📅 التاريخ: ${formatDate(loginTime)}\n🖥 الجهاز: ${userAgentInfo}`);
+    
+    // تسجيل مدة البقاء عند مغادرة المستخدم للموقع
+    window.addEventListener("beforeunload", function() {
+      let logoutTime = new Date();
+      let durationSeconds = Math.round((logoutTime - loginTime) / 1000);
+      let minutes = Math.floor(durationSeconds / 60);
+      let seconds = durationSeconds % 60;
+      sendTelegramMessage(`📤 المستخدم غادر الموقع\n⏳ مدة البقاء: ${minutes} دقيقة و ${seconds} ثانية`);
+    });
+  </script>
 </body>
 </html>
