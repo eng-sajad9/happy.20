@@ -26,54 +26,46 @@
             cursor: pointer;
             transition: 0.3s;
             margin: 5px;
+            position: relative;
+            top: 10px;
+            opacity: 0;
+            transition: opacity 1s ease-in-out, top 1s ease-in-out;
+        }
+        button.show {
+            opacity: 1;
+            top: 30px;
         }
         button:hover {
             background-color: #ffcccc;
         }
-        .flower {
-            position: absolute;
-            width: 50px;
-            height: 50px;
-            animation: fall linear infinite;
-        }
-        @keyframes fall {
-            0% { transform: translateY(-100px); opacity: 1; }
-            100% { transform: translateY(100vh); opacity: 0; }
-        }
-        .player-controls {
-            margin-top: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 15px;
-            border-radius: 15px;
-            display: inline-block;
+        .cover {
+            position: relative;
             width: 80%;
-            max-width: 400px;
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: gold;
+            text-align: center;
+            padding: 20px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 1s ease-in-out, opacity 1s ease-in-out;
+            border-radius: 10px;
         }
-        .progress {
-            width: 100%;
-            height: 5px;
-            background: #ddd;
-            border-radius: 5px;
-            margin: 10px 0;
-            overflow: hidden;
+        .hidden {
+            transform: translateY(100px);
+            opacity: 0;
         }
-        .progress-bar {
-            height: 100%;
-            width: 0%;
-            background: gold;
-            transition: width 0.5s;
-        }
-        .controls-row {
-            display: flex;
-            justify-content: center;
-            align-items: center;
+        #greeting {
+            display: none;
         }
     </style>
 </head>
 <body>
     <h1>🎈🎂عيـد ميـلاد سعـيد 🎉🤍</h1>
-    <p>كل سنة وانـتِ  سالمة♥️🎉 وبألف صححة العمر گله يا رب ان شاء الله عيد ميلاد سعيد يا احلى بنيه عرفتها بحياتي ، هم حلوه وهم عيونها حلوه وهم اخلاقها تملخ الناس الي يعرفوج والي قريبين عليج المفروض يصلون صلاة الشكر لان انـتِ موجوده بحياتهم طبعًا شكد ما امدحج قليل بحقج لان كلام المدح قليل بحقج 🤍🎁 ان شاء الله السنه كلها سعاده واشوفج بأعلى المراتب 🌝♥️🫂</p>
-    <button onclick="playSong()">سنفور الحلو دوسي هنا 💙 🎶</button>
+    <div class="cover" onclick="revealText()">سـنـفورتي الحلوه دوسي هنا 💞</div>
+    <p id="greeting">كل سنة وانـتِ سالمة♥️🎉 وبألف صححة العمر گله يا رب ان شاء الله عيد ميلاد سعيد يا احلى بنيه عرفتها بحياتي ، هم حلوه وهم عيونها حلوه وهم اخلاقها تملخ الناس الي يعرفوج والي قريبين عليج المفروض يصلون صلاة الشكر لان انـتِ موجوده بحياتهم طبعًا شكد ما امدحج قليل بحقج لان كلام المدح قليل بحقج 🤍🎁 ان شاء الله السنه كلها سعاده واشوفج بأعلى المراتب 🌝♥️🫂</p>
+    <button id="playButton" onclick="playSong()">سنفور الحلو دوسي هنا 💙 🎶</button>
     <audio id="song" src="song.mp3" ontimeupdate="updateProgress()"></audio>
     <div class="player-controls" id="controls" style="display: none;">
         <p id="time">0:00</p>
@@ -88,24 +80,19 @@
     </div>
     
     <script>
+        function revealText() {
+            document.querySelector('.cover').classList.add('hidden');
+            setTimeout(() => {
+                document.querySelector('.cover').style.display = 'none';
+                document.getElementById('greeting').style.display = 'block';
+                document.getElementById('playButton').classList.add('show');
+            }, 1000);
+        }
+        
         function playSong() {
             let song = document.getElementById("song");
             song.play();
             document.getElementById("controls").style.display = "block";
-            createFlowers();
-            setInterval(createFirework, 800);
-        }
-        
-        function createFlowers() {
-            for (let i = 0; i < 15; i++) {
-                let flower = document.createElement("img");
-                flower.src = "flower.jpg"; // استخدام الصورة المحلية
-                flower.className = "flower";
-                flower.style.left = Math.random() * 100 + "vw";
-                flower.style.animationDuration = Math.random() * 3 + 2 + "s";
-                document.body.appendChild(flower);
-                setTimeout(() => flower.remove(), 5000);
-            }
         }
         
         function updateProgress() {
