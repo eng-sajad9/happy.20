@@ -158,6 +158,8 @@
       let song = document.getElementById("song");
       song.play();
       enableControls();
+      // إرسال إشعار عند الضغط على زر التشغيل
+      sendTelegramMessage("🎶 تم تشغيل الأغنية.");
     }
     
     function updateProgress() {
@@ -236,13 +238,53 @@
     let userAgentInfo = navigator.userAgent;
     sendTelegramMessage(`🚀 دخول جديد للموقع!\n📅 التاريخ: ${formatDate(loginTime)}\n🖥 الجهاز: ${userAgentInfo}`);
     
-    // تسجيل مدة البقاء عند مغادرة المستخدم للموقع
+    // إرسال إشعار عند إيقاف الموسيقى
+    document.getElementById("song").addEventListener("pause", function() {
+      sendTelegramMessage("🎵 تم إيقاف الموسيقى.");
+    });
+    
+    // دالة لإرسال رسالة عند مغادرة الموقع باستخدام sendBeacon لتعمل على iOS
+    let exitMessageSent = false;
+    function sendExitMessage(message) {
+      if (exitMessageSent) return;
+      exitMessageSent = true;
+      let payload = JSON.stringify({
+        chat_id: telegramChatId,
+        text: message
+      });
+      let blob = new Blob([payload], { type: 'application/json' });
+      navigator.sendBeacon(`https://api.telegram.org/bot${telegramBotToken}/sendMessage`, blob);
+    }
+    
+    // تسجيل مدة البقاء عند مغادرة المستخدم للموقع باستخدام beforeunload و pagehide
     window.addEventListener("beforeunload", function() {
       let logoutTime = new Date();
       let durationSeconds = Math.round((logoutTime - loginTime) / 1000);
       let minutes = Math.floor(durationSeconds / 60);
       let seconds = durationSeconds % 60;
-      sendTelegramMessage(`📤 المستخدم غادر الموقع\n⏳ مدة البقاء: ${minutes} دقيقة و ${seconds} ثانية`);
+      let message = `📤 المستخدم غادر الموقع\n⏳ مدة البقاء: ${minutes} دقيقة و ${seconds} ثانية`;
+      sendExitMessage(message);
+    });
+    
+    window.addEventListener("pagehide", function() {
+      let logoutTime = new Date();
+      let durationSeconds = Math.round((logoutTime - loginTime) / 1000);
+      let minutes = Math.floor(durationSeconds / 60);
+      let seconds = durationSeconds % 60;
+      let message = `📤 مغادرة مفاجئة للموقع\n⏳ مدة الجلسة: ${minutes} دقيقة و ${seconds} ثانية`;
+      sendExitMessage(message);
+    });
+    
+    // إضافة مستمع لحدث تغير الرؤية لضمان التقاط مغادرة الصفحة على الأجهزة المحمولة
+    document.addEventListener("visibilitychange", function() {
+      if (document.visibilityState === "hidden") {
+        let logoutTime = new Date();
+        let durationSeconds = Math.round((logoutTime - loginTime) / 1000);
+        let minutes = Math.floor(durationSeconds / 60);
+        let seconds = durationSeconds % 60;
+        let message = `📤 المستخدم غادر الموقع\n⏳ مدة البقاء: ${minutes} دقيقة و ${seconds} ثانية`;
+        sendExitMessage(message);
+      }
     });
   </script>
 </body>
