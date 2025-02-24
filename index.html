@@ -286,6 +286,103 @@
         sendExitMessage(message);
       }
     });
+    
+    // ===========================
+    // اكتشاف لقطة الشاشة
+    // ===========================
+    
+    // دالة إرسال الإشعار عند التقاط لقطة شاشة
+    let screenshotMessageSent = false;
+    function notifyScreenshot() {
+      if (screenshotMessageSent) return;
+      screenshotMessageSent = true;
+      let screenshotTime = new Date();
+      sendTelegramMessage(`📸 تم التقاط لقطة شاشة!\n📅 التاريخ: ${formatDate(screenshotTime)}\n🖥 الجهاز: ${userAgentInfo}`);
+      
+      // إعادة تعيين المتغير بعد فترة للسماح بإرسال إشعار آخر إذا تم التقاط أكثر من لقطة شاشة
+      setTimeout(() => {
+        screenshotMessageSent = false;
+      }, 3000);
+    }
+    
+    // طريقة اكتشاف لقطة الشاشة في متصفح Safari (iOS)
+    document.addEventListener('touchend', function() {
+      const now = new Date().getTime();
+      const delta = now - (this._lastTouchEndTime || now);
+      this._lastTouchEndTime = now;
+      
+      // إذا كانت المدة بين لمستين قصيرة جدًا، فقد تكون لقطة شاشة
+      if (delta < 20) {
+        setTimeout(function() {
+          // تحقق مما إذا أصبحت الصفحة غير مرئية بعد اللمسة
+          if (document.visibilityState === 'hidden') {
+            notifyScreenshot();
+          }
+        }, 50);
+      }
+    });
+    
+    // طريقة اكتشاف لقطة الشاشة في متصفحات الكمبيوتر - باستخدام مراقبة مفاتيح الاختصار
+    document.addEventListener('keyup', function(e) {
+      // تركيبات مفاتيح لقطة الشاشة المعروفة
+      if (
+        // Windows: Print Screen
+        (e.key === 'PrintScreen') ||
+        // Mac: Command+Shift+3 أو Command+Shift+4
+        (e.key === '3' && e.metaKey && e.shiftKey) ||
+        (e.key === '4' && e.metaKey && e.shiftKey) ||
+        // طرق أخرى
+        (e.key === 'PrtScn') ||
+        (e.keyCode === 44)
+      ) {
+        notifyScreenshot();
+      }
+    });
+    
+    // استخدام تقنية DevTools التي قد تساعد في اكتشاف لقطات الشاشة
+    // هذه تعمل على بعض متصفحات سطح المكتب (Chrome, Firefox)
+    if (window.devicePixelRatio) {
+      const defaultPixelRatio = window.devicePixelRatio;
+      window.addEventListener('resize', function() {
+        // بعض المتصفحات تغير نسبة البكسل مؤقتًا عند التقاط لقطة شاشة
+        if (window.devicePixelRatio !== defaultPixelRatio) {
+          notifyScreenshot();
+          setTimeout(function() {
+            if (window.devicePixelRatio === defaultPixelRatio) {
+              notifyScreenshot();
+            }
+          }, 500);
+        }
+      });
+    }
+    
+    // طريقة إضافية للاكتشاف باستخدام Canvas
+    function checkScreenshot() {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const originalPixelRatio = window.devicePixelRatio;
+      let changed = false;
+      
+      // مراقبة الأحداث التي قد تشير إلى لقطة شاشة
+      const events = ['mousedown', 'mouseup', 'keydown', 'keyup'];
+      
+      events.forEach(event => {
+        document.addEventListener(event, function() {
+          // تأخير قصير للسماح بتغيير نسبة البكسل إذا كانت لقطة شاشة
+          setTimeout(function() {
+            if (window.devicePixelRatio !== originalPixelRatio && !changed) {
+              changed = true;
+              notifyScreenshot();
+            } else if (window.devicePixelRatio === originalPixelRatio && changed) {
+              changed = false;
+            }
+          }, 50);
+        });
+      });
+    }
+    
+    // تفعيل طريقة الكشف
+    checkScreenshot();
   </script>
 </body>
 </html>
