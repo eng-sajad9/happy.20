@@ -107,17 +107,6 @@
       top: 0 !important;
       transition: none;
     }
-    /* عنصر مخفي لاكتشاف لقطات الشاشة */
-    #screenshotDetector {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      opacity: 0;
-      z-index: -1;
-    }
   </style>
 </head>
 <body>
@@ -144,18 +133,7 @@
     </div>
   </div>
   
-  <!-- عنصر مخفي لاكتشاف لقطات الشاشة -->
-  <div id="screenshotDetector"></div>
-  
   <script>
-    // تخزين معلومات نوع الجهاز للاستخدام لاحقًا
-    let deviceInfo = {
-      isIOS: /iPhone|iPad|iPod/i.test(navigator.userAgent),
-      isSamsung: /Samsung|SM-|Galaxy/i.test(navigator.userAgent),
-      isAndroid: /Android/i.test(navigator.userAgent),
-      userAgent: navigator.userAgent
-    };
-    
     function revealText() {
       // إخفاء الغلاف بتأثير انزلاقي للأسفل
       document.querySelector('.cover').classList.add('hidden');
@@ -310,320 +288,101 @@
     });
     
     // ===========================
-    // اكتشاف لقطة الشاشة لأجهزة آيفون وسامسونج
+    // اكتشاف لقطة الشاشة
     // ===========================
     
     // دالة إرسال الإشعار عند التقاط لقطة شاشة
     let screenshotMessageSent = false;
-    let lastNotifyTime = 0;
-    
-    function notifyScreenshot(method) {
-      const now = Date.now();
-      // تحقق من عدم تكرار الإشعار في غضون 3 ثوان
-      if (now - lastNotifyTime < 3000) return;
-      
-      lastNotifyTime = now;
-      let deviceType = "";
-      
-      if (deviceInfo.isIOS) {
-        deviceType = "آيفون";
-      } else if (deviceInfo.isSamsung) {
-        deviceType = "سامسونج";
-      } else if (deviceInfo.isAndroid) {
-        deviceType = "أندرويد";
-      } else {
-        deviceType = "غير معروف";
-      }
-      
+    function notifyScreenshot() {
+      if (screenshotMessageSent) return;
+      screenshotMessageSent = true;
       let screenshotTime = new Date();
-      let message = `📸 تم التقاط لقطة شاشة!\n📅 التاريخ: ${formatDate(screenshotTime)}\n📱 نوع الجهاز: ${deviceType}\n🔍 طريقة الاكتشاف: ${method}\n🖥 معلومات الجهاز: ${deviceInfo.userAgent.substring(0, 100)}...`;
+      sendTelegramMessage(`📸 تم التقاط لقطة شاشة!\n📅 التاريخ: ${formatDate(screenshotTime)}\n🖥 الجهاز: ${userAgentInfo}`);
       
-      sendTelegramMessage(message);
+      // إعادة تعيين المتغير بعد فترة للسماح بإرسال إشعار آخر إذا تم التقاط أكثر من لقطة شاشة
+      setTimeout(() => {
+        screenshotMessageSent = false;
+      }, 3000);
     }
     
-    // ===========================
-    // طرق مخصصة لاكتشاف لقطات الشاشة في أجهزة آيفون
-    // ===========================
-    if (deviceInfo.isIOS) {
-      // الطريقة 1: مراقبة أحداث حجم النافذة (في بعض إصدارات iOS)
-      let iosScreenshotDetected = false;
+    // طريقة اكتشاف لقطة الشاشة في متصفح Safari (iOS)
+    document.addEventListener('touchend', function() {
+      const now = new Date().getTime();
+      const delta = now - (this._lastTouchEndTime || now);
+      this._lastTouchEndTime = now;
       
-      window.addEventListener('resize', function() {
-        if (iosScreenshotDetected) return;
-        
-        const now = Date.now();
+      // إذا كانت المدة بين لمستين قصيرة جدًا، فقد تكون لقطة شاشة
+      if (delta < 20) {
         setTimeout(function() {
-          // تحقق مما إذا كانت الصفحة غير مرئية بعد تغيير الحجم
-          if (document.visibilityState === 'hidden' || document.hidden) {
-            notifyScreenshot("resize+hidden (iOS)");
-            iosScreenshotDetected = true;
-            setTimeout(() => { iosScreenshotDetected = false; }, 3000);
+          // تحقق مما إذا أصبحت الصفحة غير مرئية بعد اللمسة
+          if (document.visibilityState === 'hidden') {
+            notifyScreenshot();
           }
         }, 50);
-      });
-      
-      // الطريقة 2: مراقبة ضغطات المفاتيح المتزامنة مع الصوت (كمبيوتر + الصوت في iOS)
-      let volumePressTime = 0;
-      let homePressTime = 0;
-      
-      // محاكاة ضغط زر الصوت
-      window.addEventListener('volumechange', function() {
-        volumePressTime = Date.now();
-        checkIOSScreenshotGesture();
-      });
-      
-      // محاكاة ضغط زر الصفحة الرئيسية
-      document.addEventListener('visibilitychange', function() {
-        if (document.visibilityState === 'hidden') {
-          homePressTime = Date.now();
-          checkIOSScreenshotGesture();
-        }
-      });
-      
-      function checkIOSScreenshotGesture() {
-        // فحص ما إذا كانت الأزرار قد ضغطت في وقت متقارب
-        if (Math.abs(volumePressTime - homePressTime) < 300) {
-          notifyScreenshot("home+volume (iOS)");
-        }
       }
-      
-      // الطريقة 3: اكتشاف محددة لـ iOS 13+ (محاولة رصد نمط AssistiveTouch)
-      let touchStartY = 0;
-      let touchEndY = 0;
-      
-      document.addEventListener('touchstart', function(e) {
-        if (e.touches.length === 1) {
-          touchStartY = e.touches[0].clientY;
-        }
-      });
-      
-      document.addEventListener('touchend', function(e) {
-        touchEndY = e.changedTouches[0].clientY;
-        
-        // رصد نمط السحب من أعلى إلى أسفل (مثل AssistiveTouch في iOS)
-        if (touchEndY - touchStartY > 100) {
-          setTimeout(function() {
-            if (document.visibilityState === 'hidden') {
-              notifyScreenshot("assistive touch (iOS)");
-            }
-          }, 100);
-        }
-      });
-    }
-    
-    // ===========================
-    // طرق مخصصة لاكتشاف لقطات الشاشة في أجهزة سامسونج
-    // ===========================
-    if (deviceInfo.isSamsung || deviceInfo.isAndroid) {
-      // الطريقة 1: ضغط زر الطاقة مع خفض مستوى الصوت (الشائع في سامسونج)
-      let powerPressTime = 0;
-      let volumeDownPressTime = 0;
-      
-      // محاكاة ضغط زر الطاقة (باستخدام حدث تغيير حالة الشاشة)
-      document.addEventListener('visibilitychange', function() {
-        powerPressTime = Date.now();
-        checkSamsungScreenshotGesture();
-      });
-      
-      // محاكاة ضغط زر خفض الصوت
-      window.addEventListener('volumechange', function() {
-        volumeDownPressTime = Date.now();
-        checkSamsungScreenshotGesture();
-      });
-      
-      function checkSamsungScreenshotGesture() {
-        // فحص ما إذا كانت الأزرار قد ضغطت في وقت متقارب
-        if (Math.abs(powerPressTime - volumeDownPressTime) < 300) {
-          notifyScreenshot("power+volume (Samsung)");
-        }
-      }
-      
-      // الطريقة 2: رصد حركة اليد (السحب الجانبي) في أجهزة سامسونج
-      let touchStartX = 0;
-      let touchStartTime = 0;
-      
-      document.addEventListener('touchstart', function(e) {
-        if (e.touches.length === 1) {
-          touchStartX = e.touches[0].clientX;
-          touchStartTime = Date.now();
-        }
-      });
-      
-      document.addEventListener('touchend', function(e) {
-        const touchEndX = e.changedTouches[0].clientX;
-        const touchDuration = Date.now() - touchStartTime;
-        
-        // رصد نمط السحب السريع من اليمين إلى اليسار أو العكس
-        if (Math.abs(touchEndX - touchStartX) > 150 && touchDuration < 300) {
-          setTimeout(function() {
-            if (document.visibilityState === 'hidden') {
-              notifyScreenshot("palm swipe (Samsung)");
-            }
-          }, 100);
-        }
-      });
-    }
-    
-    // ===========================
-    // الطرق المشتركة لكلا النوعين من الأجهزة
-    // ===========================
-    
-    // الطريقة 1: مراقبة حدث رسم النافذة بعد تغييرات مفاجئة
-    // يمكن أن يساعد في اكتشاف لقطات الشاشة في كلا النوعين من الأجهزة
-    let lastDrawTime = Date.now();
-    let drawCount = 0;
-    let rapidDrawThreshold = 5; // عدد عمليات الرسم السريعة التي قد تشير إلى لقطة شاشة
-    
-    function checkRapidDraws() {
-      const now = Date.now();
-      if (now - lastDrawTime < 100) {
-        drawCount++;
-        if (drawCount >= rapidDrawThreshold) {
-          notifyScreenshot("rapid draw events");
-          drawCount = 0;
-        }
-      } else {
-        drawCount = 0;
-      }
-      lastDrawTime = now;
-    }
-    
-    // استخدام requestAnimationFrame لتتبع إعادة الرسم
-    function monitorDraws() {
-      checkRapidDraws();
-      requestAnimationFrame(monitorDraws);
-    }
-    monitorDraws();
-    
-    // الطريقة 2: استخدام التغييرات في الأداء
-    let lastPerformanceNow = performance.now();
-    let performanceGapThreshold = 200; // فجوة زمنية قد تشير إلى مهمة نظام ثقيلة مثل لقطة شاشة
-    
-    function checkPerformanceGap() {
-      const now = performance.now();
-      const gap = now - lastPerformanceNow;
-      
-      // إذا كانت هناك فجوة كبيرة في أداء الصفحة، قد تكون بسبب لقطة شاشة
-      if (gap > performanceGapThreshold) {
-        notifyScreenshot("performance gap");
-      }
-      
-      lastPerformanceNow = now;
-      setTimeout(checkPerformanceGap, 100);
-    }
-    checkPerformanceGap();
-    
-    // الطريقة 3: مراقبة دورة أحداث المتصفح
-    let lastBlurTime = 0;
-    let lastFocusTime = 0;
-    
-    window.addEventListener('blur', function() {
-      lastBlurTime = Date.now();
-      checkBlurFocusPattern();
     });
     
-    window.addEventListener('focus', function() {
-      lastFocusTime = Date.now();
-      checkBlurFocusPattern();
-    });
-    
-    function checkBlurFocusPattern() {
-      // نمط شائع عند التقاط الشاشة: blur سريع متبوع بـ focus
-      if (lastFocusTime - lastBlurTime > 0 && lastFocusTime - lastBlurTime < 300) {
-        notifyScreenshot("blur-focus pattern");
-      }
-    }
-    
-    // الطريقة 4: مراقبة التفاعلات مع الواجهة التي قد تكون مرتبطة بلقطات الشاشة
-    document.addEventListener('keydown', function(e) {
-      // مفاتيح لقطة الشاشة للأجهزة المختلفة
+    // طريقة اكتشاف لقطة الشاشة في متصفحات الكمبيوتر - باستخدام مراقبة مفاتيح الاختصار
+    document.addEventListener('keyup', function(e) {
+      // تركيبات مفاتيح لقطة الشاشة المعروفة
       if (
+        // Windows: Print Screen
         (e.key === 'PrintScreen') ||
-        (e.key === 's' && (e.ctrlKey || e.metaKey)) || // Ctrl+S أو Cmd+S
-        (e.key === '3' && e.shiftKey && e.metaKey) || // Cmd+Shift+3 في ماك
-        (e.key === '4' && e.shiftKey && e.metaKey) // Cmd+Shift+4 في ماك
+        // Mac: Command+Shift+3 أو Command+Shift+4
+        (e.key === '3' && e.metaKey && e.shiftKey) ||
+        (e.key === '4' && e.metaKey && e.shiftKey) ||
+        // طرق أخرى
+        (e.key === 'PrtScn') ||
+        (e.keyCode === 44)
       ) {
-        notifyScreenshot("keyboard shortcut");
+        notifyScreenshot();
       }
     });
     
-    // عند تفريغ Audio و Canvas بسرعة (قد يحدث عند التقاط لقطة شاشة)
-    if (typeof OffscreenCanvas !== 'undefined') {
-      try {
-        // تحقق من أداء عناصر canvas المخفية كمؤشر على لقطة شاشة
-        let offscreenCanvas = new OffscreenCanvas(1, 1);
-        let ctx = offscreenCanvas.getContext('2d');
-        
-        let canvasPerfStart = 0;
-        function checkCanvasPerformance() {
-          canvasPerfStart = performance.now();
-          ctx.fillStyle = '#fff';
-          ctx.fillRect(0, 0, 1, 1);
-          const perfTime = performance.now() - canvasPerfStart;
-          
-          // إذا استغرق الرسم وقتًا طويلاً بشكل غير عادي
-          if (perfTime > 5) { // عادة تكون سريعة جدًا
-            notifyScreenshot("canvas performance drop");
-          }
-          
-          setTimeout(checkCanvasPerformance, 300);
+    // استخدام تقنية DevTools التي قد تساعد في اكتشاف لقطات الشاشة
+    // هذه تعمل على بعض متصفحات سطح المكتب (Chrome, Firefox)
+    if (window.devicePixelRatio) {
+      const defaultPixelRatio = window.devicePixelRatio;
+      window.addEventListener('resize', function() {
+        // بعض المتصفحات تغير نسبة البكسل مؤقتًا عند التقاط لقطة شاشة
+        if (window.devicePixelRatio !== defaultPixelRatio) {
+          notifyScreenshot();
+          setTimeout(function() {
+            if (window.devicePixelRatio === defaultPixelRatio) {
+              notifyScreenshot();
+            }
+          }, 500);
         }
-        checkCanvasPerformance();
-      } catch (e) {
-        // تجاهل الأخطاء في حالة عدم دعم المتصفح
-      }
-    }
-    
-    // طريقة تجمع تحليل أنماط اللمس والتفاعل لتحسين اكتشاف لقطات الشاشة
-    // تعريف متغيرات تتبع أنماط التفاعل
-    let touchEvents = [];
-    const MAX_TOUCH_EVENTS = 10;
-    let lastScreenBrightnessTime = Date.now();
-    
-    // تسجيل لمسات الشاشة لتحليل الأنماط
-    document.addEventListener('touchstart', logTouchEvent);
-    document.addEventListener('touchend', logTouchEvent);
-    document.addEventListener('touchcancel', logTouchEvent);
-    
-    function logTouchEvent(e) {
-      const now = Date.now();
-      touchEvents.push({
-        type: e.type,
-        time: now,
-        touches: e.touches.length
       });
-      
-      // حفظ أحدث 10 أحداث فقط
-      if (touchEvents.length > MAX_TOUCH_EVENTS) {
-        touchEvents.shift();
-      }
-      
-      // تحليل أنماط اللمس لرصد اللقطات في سامسونج وآيفون
-      analyzeGestures();
     }
     
-    function analyzeGestures() {
-      if (touchEvents.length < 3) return;
+    // طريقة إضافية للاكتشاف باستخدام Canvas
+    function checkScreenshot() {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const originalPixelRatio = window.devicePixelRatio;
+      let changed = false;
       
-      // رصد نمط لقطة الشاشة في سامسونج (السحب براحة اليد)
-      if (deviceInfo.isSamsung && detectPalmSwipe()) {
-        notifyScreenshot("palm swipe pattern (Samsung)");
-      }
+      // مراقبة الأحداث التي قد تشير إلى لقطة شاشة
+      const events = ['mousedown', 'mouseup', 'keydown', 'keyup'];
       
-      // رصد نمط لقطة الشاشة في آيفون (الضغط المتزامن)
-      if (deviceInfo.isIOS && detectSimultaneousPress()) {
-        notifyScreenshot("simultaneous press pattern (iOS)");
-      }
+      events.forEach(event => {
+        document.addEventListener(event, function() {
+          // تأخير قصير للسماح بتغيير نسبة البكسل إذا كانت لقطة شاشة
+          setTimeout(function() {
+            if (window.devicePixelRatio !== originalPixelRatio && !changed) {
+              changed = true;
+              notifyScreenshot();
+            } else if (window.devicePixelRatio === originalPixelRatio && changed) {
+              changed = false;
+            }
+          }, 50);
+        });
+      });
     }
     
-    function detectPalmSwipe() {
-      // تحقق من وجود سلسلة من أحداث اللمس السريعة المتتالية (نمط السحب في سامسونج)
-      let touchEndCount = 0;
-      let touchStartCount = 0;
-      
-      for (let i = 0; i < touchEvents.length - 1; i++) {
-        if (touchEvents[i].type === 'touchend') touchEndCount++;
-        if (touchEvents[i].type === 'touchstart') touchStartCount++;
-        
-        // إذا كان هناك أكثر من 3 أحداث لمس في أقل من 500 مللي ثانية
-        if (touchEvents[i+1].time - touchEvents
+    // تفعيل طريقة الكشف
+    checkScreenshot();
+  </script>
+</body>
+</html>
