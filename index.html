@@ -107,13 +107,46 @@
       top: 0 !important;
       transition: none;
     }
+    
+    /* تأثير إضاءة على العنوان */
+    @keyframes glow {
+      0%, 100% {
+        text-shadow: 0 0 5px #fff, 0 0 10px #ff0, 0 0 15px #ff0;
+      }
+      50% {
+        text-shadow: 0 0 20px #fff, 0 0 30px #ff0, 0 0 40px #ff0;
+      }
+    }
+    .glow {
+      animation: glow 2s infinite;
+    }
+    
+    /* تأثير الظلال للغلاف عند المرور */
+    .cover:hover {
+      box-shadow: 0 0 15px 5px rgba(255, 255, 255, 0.7);
+    }
+    
+    /* نمط القماش المستخدم لتأثير الكونفيتي */
+    #confettiCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 999;
+    }
   </style>
 </head>
 <body>
-  <h1>🎈🎂عيـد ميـلاد سعـيد 🎉🤍</h1>
+  <!-- قماش الكونفيتي لتأثير الورق الملون -->
+  <canvas id="confettiCanvas"></canvas>
+  
+  <h1 class="glow">🎈🎂عيـد ميـلاد سعـيد 🎉🤍</h1>
   <div class="cover" onclick="revealText()">💞سنفورتي الحلوه دوسي هنـا</div>
   <p id="greeting">
-    كل سنة وانـتِ سالمة♥️🎉 وبألف صحة العمر گله يا رب ان شاء الله ، عيد ميلاد سعيد يا احلى واحسن  بنيه عرفتها بحياتي ، هم حلوه وهم عيونها حلوه  حتى وانـتِ مطنكره تخبلين😂🌸 واخلاقج تملخ ، الناس الي يعرفوج والي قريبين عليج المفروض يصلون صلاة الشكر لان انـتِ موجوده بحياتهم طبعًا شكد ما امدحج قليل بحقج لان كلام المدح يقصر بحقج ، كلش شكرا على وقتج الحلو وياي شكد ما اشكرج قليل بحقج🤍🎁 ان شاء الله السنه كلها سعاده واشوفج بأعلى المراتب 🌝♥️🫂  </p>
+    كل سنة وانـتِ سالمة♥️🎉 وبألف صحة العمر گله يا رب ان شاء الله ، عيد ميلاد سعيد يا احلى واحسن  بنيه عرفتها بحياتي ، هم حلوه وهم عيونها حلوه  حتى وانـتِ مطنكره تخبلين😂🌸 واخلاقج تملخ ، الناس الي يعرفوج والي قريبين عليج المفروض يصلون صلاة الشكر لان انـتِ موجوده بحياتهم طبعًا شكد ما امدحج قليل بحقج لان كلام المدح يقصر بحقج ، كلش شكرا على وقتج الحلو وياي شكد ما اشكرج قليل بحقج🤍🎁 ان شاء الله السنه كلها سعاده واشوفج بأعلى المراتب 🌝♥️🫂  
+  </p>
   <!-- زر تشغيل الأغنية مخفي حتى يظهر بعد النقر على الغلاف -->
   <button id="playButton" onclick="playSong()">💙 🎶سنفور الحلو دوسي هنا</button>
   <audio id="song" src="song.mp3" ontimeupdate="updateProgress()"></audio>
@@ -142,6 +175,8 @@
         document.getElementById('greeting').style.display = 'block';
         // إظهار زر تشغيل الأغنية بعد إخفاء الغلاف
         document.getElementById('playButton').classList.add('show');
+        // بدء تأثير الكونفيتي للاحتفال
+        startConfetti();
       }, 1000);
     }
     
@@ -365,6 +400,76 @@
       });
     }
     checkScreenshot();
+    
+    // ===========================
+    // تأثير الكونفيتي (الورق الملون) للاحتفال
+    // ===========================
+    function startConfetti() {
+      const canvas = document.getElementById('confettiCanvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      
+      const particles = [];
+      const particleCount = 150;
+      
+      for (let i = 0; i < particleCount; i++) {
+        particles.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height - canvas.height,
+          r: Math.random() * 6 + 2,
+          d: Math.random() * particleCount,
+          color: 'rgba(' + Math.floor(Math.random()*255) + ',' + Math.floor(Math.random()*255) + ',' + Math.floor(Math.random()*255) + ',0.8)',
+          tilt: Math.floor(Math.random() * 10) - 10,
+          tiltAngleIncremental: (Math.random() * 0.07) + 0.05,
+          tiltAngle: 0
+        });
+      }
+      
+      let angle = 0;
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(function(p) {
+          ctx.beginPath();
+          ctx.lineWidth = p.r;
+          ctx.strokeStyle = p.color;
+          ctx.moveTo(p.x + p.tilt + (p.r / 2), p.y);
+          ctx.lineTo(p.x + p.tilt, p.y + p.tilt + (p.r / 2));
+          ctx.stroke();
+        });
+        update();
+      }
+      
+      function update() {
+        angle += 0.01;
+        particles.forEach(function(p, index) {
+          p.tiltAngle += p.tiltAngleIncremental;
+          p.y += (Math.cos(angle + p.d) + 1 + p.r / 2) / 2;
+          p.x += Math.sin(angle);
+          p.tilt = Math.sin(p.tiltAngle) * 15;
+          
+          if (p.y > canvas.height) {
+            particles[index] = {
+              x: Math.random() * canvas.width,
+              y: -20,
+              r: p.r,
+              d: p.d,
+              color: p.color,
+              tilt: p.tilt,
+              tiltAngleIncremental: p.tiltAngleIncremental,
+              tiltAngle: p.tiltAngle
+            };
+          }
+        });
+      }
+      
+      function animate() {
+        draw();
+        requestAnimationFrame(animate);
+      }
+      
+      animate();
+    }
   </script>
 </body>
 </html>
